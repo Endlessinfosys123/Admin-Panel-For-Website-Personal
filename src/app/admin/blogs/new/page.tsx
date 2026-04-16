@@ -13,13 +13,9 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
-import { Button as UIButton } from "@/components/ui/button";
-import { Input as UIInput } from "@/components/ui/input";
-import { Card as UICard } from "@/components/ui/card";
-
-const Button = UIButton as any;
-const Input = UIInput as any;
-const Card = UICard as any;
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
 
 import { Editor } from "@/components/admin/Editor";
 import { createClient } from "@/lib/supabase/client";
@@ -58,7 +54,7 @@ export default function NewBlogPage() {
       toast.error("Failed to fetch post");
       router.push("/admin/blogs");
     } else if (data) {
-      const blog = data as any;
+      const blog = data;
       setTitle(blog.title);
       setSlug(blog.slug);
       setExcerpt(blog.excerpt || "");
@@ -89,25 +85,27 @@ export default function NewBlogPage() {
     setLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
 
-    const payload = {
+    const payload: Database['public']['Tables']['blogs']['Insert'] | Database['public']['Tables']['blogs']['Update'] = {
       title,
       slug,
       excerpt: excerpt || content.substring(0, 150).replace(/<[^>]*>/g, ""),
       content,
       image_url: imageUrl,
       status,
-      author_id: user?.id,
+      author_id: user?.id || null,
     };
 
     let error;
     if (editId) {
-      const { error: updateError } = await (supabase.from("blogs") as any)
-        .update(payload)
+      const { error: updateError } = await supabase
+        .from("blogs")
+        .update(payload as Database['public']['Tables']['blogs']['Update'])
         .eq("id", editId);
       error = updateError;
     } else {
-      const { error: insertError } = await (supabase.from("blogs") as any)
-        .insert(payload);
+      const { error: insertError } = await supabase
+        .from("blogs")
+        .insert(payload as Database['public']['Tables']['blogs']['Insert']);
       error = insertError;
     }
 
