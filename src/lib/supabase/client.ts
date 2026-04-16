@@ -4,14 +4,15 @@ import { type SupabaseClient } from "@supabase/supabase-js";
 
 const createRecursiveMock = (): any => {
   const fn = () => createRecursiveMock();
-  fn.data = { user: null };
-  fn.error = null;
-  fn.count = 0;
   return new Proxy(fn, {
     get: (target: any, prop: string) => {
       if (prop === "then") return undefined;
-      return target[prop] ?? createRecursiveMock();
+      if (prop === "data") return { user: null };
+      if (prop === "error") return null;
+      if (prop === "count") return 0;
+      return createRecursiveMock();
     },
+    apply: () => createRecursiveMock(),
   });
 };
 
