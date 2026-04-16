@@ -3,8 +3,16 @@ import { type Database } from "@/types/database";
 import { type SupabaseClient } from "@supabase/supabase-js";
 
 export function createClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    // Return a dummy client or handle missing env vars during build
+    return {} as SupabaseClient<Database>;
+  }
+
   return createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    supabaseUrl,
+    supabaseAnonKey
   ) as SupabaseClient<Database>;
 }

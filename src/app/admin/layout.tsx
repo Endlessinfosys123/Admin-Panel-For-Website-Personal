@@ -1,6 +1,8 @@
 import { Sidebar } from "@/components/admin/Sidebar";
 import { type Metadata } from "next";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Admin Panel | Tishykumar Patel",
   description: "Founder & CEO personal brand management dashboard",
