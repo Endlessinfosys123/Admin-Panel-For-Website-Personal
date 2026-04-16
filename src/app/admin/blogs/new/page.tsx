@@ -34,7 +34,7 @@ export default function NewBlogPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const editId = searchParams.get("id");
-  const supabase: SupabaseClient<Database> = createClient();
+  const supabase = createClient();
 
   useEffect(() => {
     if (editId) {
@@ -54,7 +54,7 @@ export default function NewBlogPage() {
       toast.error("Failed to fetch post");
       router.push("/admin/blogs");
     } else if (data) {
-      const blog = data;
+      const blog = data as Database['public']['Tables']['blogs']['Row'];
       setTitle(blog.title);
       setSlug(blog.slug);
       setExcerpt(blog.excerpt || "");
@@ -85,7 +85,7 @@ export default function NewBlogPage() {
     setLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
 
-    const payload: Database['public']['Tables']['blogs']['Insert'] | Database['public']['Tables']['blogs']['Update'] = {
+    const payload = {
       title,
       slug,
       excerpt: excerpt || content.substring(0, 150).replace(/<[^>]*>/g, ""),
@@ -95,22 +95,20 @@ export default function NewBlogPage() {
       author_id: user?.id || null,
     };
 
-    let error;
+    let saveError;
     if (editId) {
-      const { error: updateError } = await supabase
-        .from("blogs")
-        .update(payload as Database['public']['Tables']['blogs']['Update'])
+      const { error } = await (supabase.from("blogs") as any)
+        .update(payload)
         .eq("id", editId);
-      error = updateError;
+      saveError = error;
     } else {
-      const { error: insertError } = await supabase
-        .from("blogs")
-        .insert(payload as Database['public']['Tables']['blogs']['Insert']);
-      error = insertError;
+      const { error } = await (supabase.from("blogs") as any)
+        .insert(payload);
+      saveError = error;
     }
 
-    if (error) {
-      toast.error(`Error: ${error.message}`);
+    if (saveError) {
+      toast.error(`Error: ${saveError.message}`);
       setLoading(false);
       return;
     }
