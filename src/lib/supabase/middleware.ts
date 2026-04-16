@@ -2,16 +2,14 @@ import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function updateSession(request: NextRequest) {
-  let response = NextResponse.next({
-    request: {
-      headers: request.headers,
-    },
-  });
+  let response = NextResponse.next();
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !supabaseAnonKey) {
+    // If env vars are missing, we still want to handle root redirects if possible,
+    // but without Supabase we can only do so much. Let's proceed to the next handler.
     return response;
   }
 
@@ -62,6 +60,15 @@ export async function updateSession(request: NextRequest) {
   );
 
   const { data: { user } } = await supabase.auth.getUser();
+
+  // Root path handling
+  if (request.nextUrl.pathname === "/") {
+    if (user) {
+      return NextResponse.redirect(new URL("/admin", request.url));
+    } else {
+      return NextResponse.redirect(new URL("/login", request.url));
+    }
+  }
 
   // Protect /admin routes
   if (request.nextUrl.pathname.startsWith("/admin")) {
