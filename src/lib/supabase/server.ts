@@ -2,21 +2,26 @@ import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { Database } from "@/types/database";
 
+const createRecursiveMock = (): any => {
+  const fn = () => createRecursiveMock();
+  fn.data = { user: null };
+  fn.error = null;
+  fn.count = 0;
+  return new Proxy(fn, {
+    get: (target: any, prop: string) => {
+      if (prop === "then") return undefined;
+      return target[prop] ?? createRecursiveMock();
+    },
+  });
+};
+
 export function createClient() {
   const cookieStore = cookies();
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !supabaseAnonKey) {
-    return new Proxy({} as any, {
-      get: () => () => ({
-        data: null,
-        error: null,
-        count: 0,
-        select: () => ({ data: null, error: null, count: 0 }),
-        from: () => ({ select: () => ({ data: null, error: null, count: 0 }) }),
-      }),
-    });
+    return createRecursiveMock();
   }
 
   return createServerClient<Database>(
