@@ -8,7 +8,15 @@ export function createClient() {
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !supabaseAnonKey) {
-    return {} as any;
+    return new Proxy({} as any, {
+      get: () => () => ({
+        data: null,
+        error: null,
+        count: 0,
+        select: () => ({ data: null, error: null, count: 0 }),
+        from: () => ({ select: () => ({ data: null, error: null, count: 0 }) }),
+      }),
+    });
   }
 
   return createServerClient<Database>(

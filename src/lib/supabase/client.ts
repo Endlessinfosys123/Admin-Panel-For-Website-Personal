@@ -7,8 +7,16 @@ export function createClient() {
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !supabaseAnonKey) {
-    // Return a dummy client or handle missing env vars during build
-    return {} as SupabaseClient<Database>;
+    // Return a proxy that returns mock results for any property access
+    return new Proxy({} as any, {
+      get: () => () => ({
+        data: null,
+        error: null,
+        count: 0,
+        select: () => ({ data: null, error: null, count: 0 }),
+        from: () => ({ select: () => ({ data: null, error: null, count: 0 }) }),
+      }),
+    }) as SupabaseClient<Database>;
   }
 
   return createBrowserClient(
